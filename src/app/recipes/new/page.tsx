@@ -61,7 +61,7 @@ export default function NewRecipePage() {
   });
 
   async function onSubmit(values: RecipeFormValues) {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     const recipeId = uuidv4();
     try {
         const { recipeIngredients, ...recipeData } = values;
@@ -247,7 +247,7 @@ export default function NewRecipePage() {
                                 <FormItem>
                                 <FormLabel>Image URL</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="https://..." {...field} />
+                                    <Input placeholder="https://images.unsplash.com/..." {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>

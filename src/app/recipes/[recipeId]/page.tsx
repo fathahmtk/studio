@@ -108,11 +108,12 @@ export default function RecipeDetailsPage() {
            <Card>
              <CardHeader className='p-0'>
                 <Image
-                    src={recipe.imageUrl || "https://picsum.photos/seed/placeholder/600/400"}
+                    src={recipe.imageUrl || "https://picsum.photos/seed/placeholder/800/450"}
                     alt={recipe.name}
                     width={800}
                     height={450}
                     className="object-cover aspect-video rounded-t-lg"
+                    data-ai-hint={recipe.imageHint || "food"}
                     />
              </CardHeader>
             <CardContent className='pt-6'>

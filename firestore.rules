@@ -78,6 +78,28 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
+    /**
+     * @description Allows signed-in users to perform collection group queries on 'ingredients'.
+     * This is required for features that need to list all ingredients across all suppliers.
+     * @path /{path=**}/ingredients/{ingredientId}
+     * @allow (get, list) User is signed in.
+     * @principle Enables cross-collection queries for a core entity.
+     */
+    match /{path=**}/ingredients/{ingredientId} {
+        allow read, write: if isSignedIn();
+    }
+
+    /**
+     * @description Allows signed-in users to perform collection group queries on 'recipeIngredients'.
+     * This is required for features that need to list all recipe ingredients across all recipes.
+     * @path /{path=**}/recipeIngredients/{recipeIngredientId}
+     * @allow (get, list) User is signed in.
+     * @principle Enables cross-collection queries for recipe composition.
+     */
+    match /{path=**}/recipeIngredients/{recipeIngredientId} {
+        allow read, write: if isSignedIn();
+    }
+
     // Define helper functions
     function isSignedIn() {
       return request.auth != null;

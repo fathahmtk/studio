@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, ChefHat, Utensils } from "lucide-react";
 import { RecipeCostChart } from "@/app/components/recipe-cost-chart";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import type { Ingredient, Recipe, RecipeIngredient } from "@/lib/types";
 import { collection, collectionGroup } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,15 +19,16 @@ const calculateRecipeCost = (recipeIngredients: RecipeIngredient[], allIngredien
 
 export default function Home() {
   const firestore = useFirestore();
+  const { user, isUserLoading: isUserLoadingAuth } = useUser();
 
-  const recipesQuery = useMemoFirebase(() => collection(firestore, "recipes"), [firestore]);
+  const recipesQuery = useMemoFirebase(() => user ? collection(firestore, "recipes") : null, [firestore, user]);
   const { data: recipes, isLoading: isLoadingRecipes } = useCollection<Recipe>(recipesQuery);
 
-  const ingredientsQuery = useMemoFirebase(() => collectionGroup(firestore, "ingredients"), [firestore]);
+  const ingredientsQuery = useMemoFirebase(() => user ? collectionGroup(firestore, "ingredients") : null, [firestore, user]);
   const { data: ingredients, isLoading: isLoadingIngredients } = useCollection<Ingredient>(ingredientsQuery);
 
-  const recipeIngredientsQuery = useMemoFirebase(() => collectionGroup(firestore, 'recipeIngredients'), [firestore]);
-    const { data: recipeIngredients, isLoading: isLoadingRecipeIngredients } = useCollection<RecipeIngredient>(recipeIngredientsQuery);
+  const recipeIngredientsQuery = useMemoFirebase(() => user ? collectionGroup(firestore, 'recipeIngredients') : null, [firestore, user]);
+  const { data: recipeIngredients, isLoading: isLoadingRecipeIngredients } = useCollection<RecipeIngredient>(recipeIngredientsQuery);
 
 
   const recipeCostData = recipes?.map((recipe) => {
@@ -45,7 +46,7 @@ export default function Home() {
       ? (recipeCostData.reduce((acc, r) => acc + r.cost, 0) / totalRecipes).toFixed(2)
       : "0.00";
 
-  const isLoading = isLoadingRecipes || isLoadingIngredients || isLoadingRecipeIngredients;
+  const isLoading = isUserLoadingAuth || isLoadingRecipes || isLoadingIngredients || isLoadingRecipeIngredients;
 
 
   if (isLoading) {

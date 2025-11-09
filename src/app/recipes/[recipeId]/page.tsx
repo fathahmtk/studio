@@ -1,6 +1,6 @@
 'use client';
 import { useParams } from 'next/navigation';
-import { useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc, collection, collectionGroup } from 'firebase/firestore';
 import type { Recipe, RecipeIngredient, Ingredient } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,14 +14,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function RecipeDetailsPage() {
   const { recipeId } = useParams();
   const firestore = useFirestore();
+  const { user, isUserLoading: isUserLoadingAuth } = useUser();
 
-  const recipeRef = useMemoFirebase(() => recipeId ? doc(firestore, 'recipes', recipeId as string) : null, [firestore, recipeId]);
+  const recipeRef = useMemoFirebase(() => (recipeId && user) ? doc(firestore, 'recipes', recipeId as string) : null, [firestore, recipeId, user]);
   const { data: recipe, isLoading: isLoadingRecipe } = useDoc<Recipe>(recipeRef);
 
-  const recipeIngredientsRef = useMemoFirebase(() => recipeId ? collection(firestore, `recipes/${recipeId}/recipeIngredients`) : null, [firestore, recipeId]);
+  const recipeIngredientsRef = useMemoFirebase(() => (recipeId && user) ? collection(firestore, `recipes/${recipeId}/recipeIngredients`) : null, [firestore, recipeId, user]);
   const { data: recipeIngredients, isLoading: isLoadingRecipeIngredients } = useCollection<RecipeIngredient>(recipeIngredientsRef);
   
-  const allIngredientsRef = useMemoFirebase(() => collectionGroup(firestore, 'ingredients'), [firestore]);
+  const allIngredientsRef = useMemoFirebase(() => user ? collectionGroup(firestore, 'ingredients') : null, [firestore, user]);
   const { data: allIngredients, isLoading: isLoadingAllIngredients } = useCollection<Ingredient>(allIngredientsRef);
 
   const getIngredientDetails = (ingredientId: string) => {
@@ -47,7 +48,7 @@ export default function RecipeDetailsPage() {
       }, 0);
   }
 
-  const isLoading = isLoadingRecipe || isLoadingRecipeIngredients || isLoadingAllIngredients;
+  const isLoading = isUserLoadingAuth || isLoadingRecipe || isLoadingRecipeIngredients || isLoadingAllIngredients;
 
   if (isLoading) {
     return (

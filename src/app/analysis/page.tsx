@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, collectionGroup } from "firebase/firestore";
 import type { Ingredient, Recipe, RecipeIngredient } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,17 +37,18 @@ const portionSizes = [
 
 export default function AnalysisPage() {
   const firestore = useFirestore();
+  const { user, isUserLoading: isUserLoadingAuth } = useUser();
 
-  const recipesQuery = useMemoFirebase(() => collection(firestore, "recipes"), [firestore]);
+  const recipesQuery = useMemoFirebase(() => user ? collection(firestore, "recipes") : null, [firestore, user]);
   const { data: recipes, isLoading: isLoadingRecipes } = useCollection<Recipe>(recipesQuery);
 
-  const ingredientsQuery = useMemoFirebase(() => collectionGroup(firestore, "ingredients"), [firestore]);
+  const ingredientsQuery = useMemoFirebase(() => user ? collectionGroup(firestore, "ingredients") : null, [firestore, user]);
   const { data: ingredients, isLoading: isLoadingIngredients } = useCollection<Ingredient>(ingredientsQuery);
 
-  const recipeIngredientsQuery = useMemoFirebase(() => collectionGroup(firestore, 'recipeIngredients'), [firestore]);
+  const recipeIngredientsQuery = useMemoFirebase(() => user ? collectionGroup(firestore, 'recipeIngredients') : null, [firestore, user]);
   const { data: recipeIngredients, isLoading: isLoadingRecipeIngredients } = useCollection<RecipeIngredient>(recipeIngredientsQuery);
 
-  const isLoading = isLoadingRecipes || isLoadingIngredients || isLoadingRecipeIngredients;
+  const isLoading = isUserLoadingAuth || isLoadingRecipes || isLoadingIngredients || isLoadingRecipeIngredients;
   
   if (isLoading) {
     return (

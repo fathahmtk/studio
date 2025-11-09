@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, collectionGroup, doc } from 'firebase/firestore';
 import type { Ingredient } from '@/lib/types';
 import { PlusCircle, Trash2 } from 'lucide-react';
@@ -36,10 +36,11 @@ type RecipeFormValues = z.infer<typeof formSchema>;
 
 export default function NewRecipePage() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
 
-  const ingredientsQuery = useMemoFirebase(() => collectionGroup(firestore, 'ingredients'), [firestore]);
+  const ingredientsQuery = useMemoFirebase(() => user ? collectionGroup(firestore, 'ingredients') : null, [firestore, user]);
   const { data: ingredients, isLoading: ingredientsLoading } = useCollection<Ingredient>(ingredientsQuery);
 
   const form = useForm<RecipeFormValues>({
@@ -87,7 +88,7 @@ export default function NewRecipePage() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold tracking-tight">New Recipe</h1>
-             <Button type="submit" disabled={form.formState.isSubmitting}>
+             <Button type="submit" disabled={form.formState.isSubmitting || !user}>
                 {form.formState.isSubmitting ? "Saving..." : "Save Recipe"}
             </Button>
         </div>

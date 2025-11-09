@@ -16,6 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { IngredientActions } from "./ingredient-actions";
 import { IngredientForm } from "./ingredient-form";
 import type { Ingredient, Supplier } from "@/lib/types";
+import { IngredientImport } from "./ingredient-import";
 
 export function IngredientsTable({ ingredients, suppliers }: { ingredients: Ingredient[], suppliers: Supplier[] }) {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -47,10 +48,13 @@ export function IngredientsTable({ ingredients, suppliers }: { ingredients: Ingr
             <CardTitle>Ingredients</CardTitle>
             <CardDescription>Manage your ingredient database.</CardDescription>
           </div>
-          <Button onClick={handleAddClick}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Ingredient
-          </Button>
+          <div className="flex items-center gap-2">
+            <IngredientImport suppliers={suppliers} />
+            <Button onClick={handleAddClick}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Ingredient
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

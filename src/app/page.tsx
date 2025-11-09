@@ -1,12 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, ChefHat, Utensils } from "lucide-react";
 import { recipes, ingredients } from "@/lib/data";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { RecipeCostChart } from "@/app/components/recipe-cost-chart";
 
 const calculateRecipeCost = (recipe: (typeof recipes)[0]) => {
   return recipe.ingredients.reduce((total, item) => {
@@ -77,35 +72,7 @@ export default function Home() {
           <CardTitle>Recipe Cost Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={{}} className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={recipeCostData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <XAxis
-                  dataKey="name"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `QAR ${value}`}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
-                />
-                <Bar
-                  dataKey="cost"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+          <RecipeCostChart data={recipeCostData} />
         </CardContent>
       </Card>
     </div>

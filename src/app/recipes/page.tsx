@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const calculateRecipeCost = (recipe: Recipe, recipeIngredients: RecipeIngredient[] | null, allIngredients: Ingredient[] | null) => {
     if (!recipeIngredients || !allIngredients) return recipe.laborCost + recipe.overheadCost;
     
-    const ingredientsForRecipe = recipeIngredients.filter(ri => ri.id.startsWith(recipe.id));
+    const ingredientsForRecipe = recipeIngredients.filter(ri => ri.recipeId === recipe.id);
 
     const ingredientCost = ingredientsForRecipe.reduce((total, item) => {
         const ingredient = allIngredients.find((i) => i.id === item.ingredientId);
@@ -43,14 +43,16 @@ export default function RecipesPage() {
     if (isLoading) {
         return (
              <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Recipes</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Recipes</h1>
                         <p className="text-muted-foreground">Build and manage your menu items.</p>
                     </div>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        New Recipe
+                    <Button asChild className="w-full sm:w-auto">
+                        <Link href="/recipes/new">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            New Recipe
+                        </Link>
                     </Button>
                 </div>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -80,19 +82,19 @@ export default function RecipesPage() {
 
   return (
     <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Recipes</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Recipes</h1>
                 <p className="text-muted-foreground">Build and manage your menu items.</p>
             </div>
-             <Button asChild>
+             <Button asChild className="w-full sm:w-auto">
                 <Link href="/recipes/new">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     New Recipe
                 </Link>
             </Button>
         </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {recipes?.map((recipe) => {
           const totalCost = calculateRecipeCost(recipe, recipeIngredients, ingredients);
           return (
@@ -117,7 +119,7 @@ export default function RecipesPage() {
                   <p className="text-xs text-muted-foreground">Total Menu Price</p>
                 </div>
                 <Button variant="outline" asChild>
-                    <Link href={`/recipes/${recipe.id}`}>View Details</Link>
+                    <Link href={`/recipes/${recipe.id}`}>View</Link>
                 </Button>
               </CardFooter>
             </Card>

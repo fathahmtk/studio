@@ -15,7 +15,8 @@ export type Ingredient = {
 };
 
 export type RecipeIngredient = {
-  id: string; // This will be the ingredientId from the subcollection
+  id: string; 
+  recipeId: string;
   ingredientId: string;
   quantity: number;
   // We can fetch ingredient details separately if needed

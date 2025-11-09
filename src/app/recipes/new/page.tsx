@@ -9,10 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, collectionGroup, doc } from 'firebase/firestore';
+import { collection, collectionGroup, doc, writeBatch } from 'firebase/firestore';
 import type { Ingredient } from '@/lib/types';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
@@ -62,18 +61,24 @@ export default function NewRecipePage() {
   });
 
   async function onSubmit(values: RecipeFormValues) {
+    if (!firestore) return;
     const recipeId = uuidv4();
     try {
         const { recipeIngredients, ...recipeData } = values;
         
+        const batch = writeBatch(firestore);
+
         const recipeDocRef = doc(firestore, 'recipes', recipeId);
-        await addDocumentNonBlocking(collection(firestore, 'recipes'), { ...recipeData, id: recipeId });
+        batch.set(recipeDocRef, { ...recipeData, id: recipeId });
 
         const ingredientsCollectionRef = collection(recipeDocRef, 'recipeIngredients');
         for (const ingredient of recipeIngredients) {
-            const ingredientDocRef = doc(ingredientsCollectionRef, ingredient.ingredientId);
-            setDocumentNonBlocking(ingredientDocRef, ingredient, {});
+            const newIngredientId = uuidv4();
+            const ingredientDocRef = doc(ingredientsCollectionRef, newIngredientId);
+            batch.set(ingredientDocRef, { ...ingredient, id: newIngredientId, recipeId });
         }
+        
+        await batch.commit();
 
         toast({ title: "Success", description: "Recipe created successfully!" });
         router.push('/recipes');
@@ -86,9 +91,9 @@ export default function NewRecipePage() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight">New Recipe</h1>
-             <Button type="submit" disabled={form.formState.isSubmitting || !user}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">New Recipe</h1>
+             <Button type="submit" disabled={form.formState.isSubmitting || !user} className="w-full sm:w-auto">
                 {form.formState.isSubmitting ? "Saving..." : "Save Recipe"}
             </Button>
         </div>
@@ -136,12 +141,12 @@ export default function NewRecipePage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {fields.map((field, index) => (
-                             <div key={field.id} className="flex items-end gap-4 p-2 rounded-md border">
+                             <div key={field.id} className="flex flex-col sm:flex-row items-start sm:items-end gap-4 p-2 rounded-md border">
                                 <FormField
                                     control={form.control}
                                     name={`recipeIngredients.${index}.ingredientId`}
                                     render={({ field }) => (
-                                        <FormItem className="flex-1">
+                                        <FormItem className="flex-1 w-full">
                                             <FormLabel>Ingredient</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={ingredientsLoading}>
                                                 <FormControl>
@@ -163,17 +168,18 @@ export default function NewRecipePage() {
                                      control={form.control}
                                      name={`recipeIngredients.${index}.quantity`}
                                      render={({ field }) => (
-                                        <FormItem className='w-32'>
+                                        <FormItem className='w-full sm:w-32'>
                                              <FormLabel>Quantity</FormLabel>
                                              <FormControl>
                                                 <Input type="number" step="0.01" placeholder="1" {...field} />
-                                             </FormControl>
+              </FormControl>
                                              <FormMessage />
                                         </FormItem>
                                      )}
                                 />
-                                <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                                <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} className="w-full sm:w-10 mt-2 sm:mt-0">
                                     <Trash2 className="h-4 w-4" />
+                                     <span className="sm:hidden ml-2">Remove</span>
                                 </Button>
                              </div>
                         ))}
@@ -187,8 +193,8 @@ export default function NewRecipePage() {
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Ingredient
                         </Button>
-                         {form.formState.errors.recipeIngredients && (
-                            <p className="text-sm font-medium text-destructive">{form.formState.errors.recipeIngredients.message}</p>
+                         {form.formState.errors.recipeIngredients?.root && (
+                            <p className="text-sm font-medium text-destructive">{form.formState.errors.recipeIngredients.root.message}</p>
                         )}
                     </CardContent>
                 </Card>

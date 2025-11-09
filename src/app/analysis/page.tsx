@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const calculateRecipeCost = (recipe: Recipe, recipeIngredients: RecipeIngredient[] | null, allIngredients: Ingredient[] | null) => {
   if (!recipeIngredients || !allIngredients) return 0;
 
-  const ingredientsForRecipe = recipeIngredients.filter(ri => ri.id.startsWith(recipe.id));
+  const ingredientsForRecipe = recipeIngredients.filter(ri => ri.recipeId === recipe.id);
   
   const ingredientCost = ingredientsForRecipe.reduce((total, item) => {
     const ingredient = allIngredients.find((i) => i.id === item.ingredientId);
@@ -86,11 +86,11 @@ export default function AnalysisPage() {
             Analyze profitability and cost breakdown for your menu items.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[300px]">Recipe</TableHead>
+                <TableHead className="w-[200px] sm:w-[300px]">Recipe</TableHead>
                 <TableHead>Ingredient Cost</TableHead>
                 <TableHead>Labor & Overhead</TableHead>
                 <TableHead>Total Cost (Std)</TableHead>
@@ -131,11 +131,11 @@ export default function AnalysisPage() {
             <CardTitle>Cost by Portion Size</CardTitle>
             <CardDescription>Review the total cost for different serving sizes.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[300px]">Recipe</TableHead>
+                        <TableHead className="w-[200px] sm:w-[300px]">Recipe</TableHead>
                         {portionSizes.map(size => (
                             <TableHead key={size.name}>{size.name} Cost</TableHead>
                         ))}

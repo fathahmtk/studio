@@ -1,6 +1,6 @@
 'use client';
 
-import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,26 +15,36 @@ import { Bell, Search } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Input } from '../ui/input';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import Image from 'next/image';
 
 const pageTitles: { [key: string]: string } = {
   '/': 'Dashboard',
-  '/ingredients': 'Ingredient Database',
-  '/recipes': 'Recipe Builder',
-  '/analysis': 'Menu Cost Analysis',
+  '/ingredients': 'Ingredients',
+  '/recipes': 'Recipes',
+  '/recipes/new': 'New Recipe',
+  '/analysis': 'Cost Analysis',
 };
 
+function getTitle(pathname: string): string {
+  if (pageTitles[pathname]) {
+    return pageTitles[pathname];
+  }
+  if (pathname.startsWith('/recipes/')) {
+    return 'Recipe Details';
+  }
+  return 'Culinary Cost';
+}
+
+
 export function Header() {
-  const { isMobile, toggleSidebar } = useSidebar();
   const pathname = usePathname();
-  const title = pageTitles[pathname] || 'Culinary Cost Manager';
+  const title = getTitle(pathname);
 
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar');
 
   return (
     <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
       <SidebarTrigger className="sm:hidden" />
-      <h1 className="text-xl font-semibold">{title}</h1>
+      <h1 className="text-xl font-semibold hidden sm:block">{title}</h1>
 
       <div className="ml-auto flex items-center gap-2 sm:gap-4">
         <form className="relative flex-1 sm:flex-initial">
@@ -42,7 +52,7 @@ export function Header() {
           <Input
             type="search"
             placeholder="Search..."
-            className="pl-8 sm:w-[200px] md:w-[200px] lg:w-[300px]"
+            className="pl-8 w-full sm:w-[200px] md:w-[200px] lg:w-[300px]"
           />
         </form>
         <Button variant="ghost" size="icon" className="rounded-full">

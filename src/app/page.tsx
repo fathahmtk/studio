@@ -32,7 +32,7 @@ export default function Home() {
 
 
   const recipeCostData = recipes?.map((recipe) => {
-    const relevantRecipeIngredients = recipeIngredients?.filter(ri => ri.id.startsWith(recipe.id)) ?? [];
+    const relevantRecipeIngredients = recipeIngredients?.filter(ri => ri.recipeId === recipe.id) ?? [];
     return {
       name: recipe.name.split(" ").slice(0, 2).join(" "),
       cost: parseFloat(calculateRecipeCost(relevantRecipeIngredients, ingredients).toFixed(2)),
@@ -42,8 +42,8 @@ export default function Home() {
   const totalIngredients = ingredients?.length ?? 0;
   const totalRecipes = recipes?.length ?? 0;
   const averageRecipeCost =
-    totalRecipes > 0
-      ? (recipeCostData.reduce((acc, r) => acc + r.cost, 0) / totalRecipes).toFixed(2)
+    recipeCostData.length > 0
+      ? (recipeCostData.reduce((acc, r) => acc + r.cost, 0) / recipeCostData.length).toFixed(2)
       : "0.00";
 
   const isLoading = isUserLoadingAuth || isLoadingRecipes || isLoadingIngredients || isLoadingRecipeIngredients;

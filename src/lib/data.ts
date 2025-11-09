@@ -1,5 +1,6 @@
-import { collection, doc, getDocs, getFirestore } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
+import { v4 as uuidv4 } from 'uuid';
 
 // This file is now primarily for seeding data if the collections are empty.
 
@@ -80,69 +81,70 @@ const seedRecipeIngredients = {
   ],
 }
 
-
-async function seedCollection(collectionPath: string, data: any[]) {
-    const { setDocumentNonBlocking } = await import('@/firebase/non-blocking-updates');
+async function seedCollection(collectionPath: string, data: any[], batch: import('firebase/firestore').WriteBatch) {
     const collectionRef = collection(firestore, collectionPath);
     const snapshot = await getDocs(collectionRef);
     if (snapshot.empty) {
         console.log(`Seeding '${collectionPath}'...`);
-        const promises = data.map(item => {
+        data.forEach(item => {
             const docRef = doc(collectionRef, item.id);
-            return setDocumentNonBlocking(docRef, item, {});
+            batch.set(docRef, item);
         });
-        await Promise.all(promises);
     }
 }
 
-async function seedSubCollection(recipeId: string, ingredients: any[]) {
-    const { setDocumentNonBlocking } = await import('@/firebase/non-blocking-updates');
-    const path = `/recipes/${recipeId}/recipeIngredients`;
+async function seedSubCollection(recipeId: string, ingredients: any[], batch: import('firebase/firestore').WriteBatch) {
+    const path = `recipes/${recipeId}/recipeIngredients`;
     const collectionRef = collection(firestore, path);
     const snapshot = await getDocs(collectionRef);
     if (snapshot.empty) {
         console.log(`Seeding '${path}'...`);
-        const promises = ingredients.map(item => {
-            // Using ingredientId as the document ID for simplicity and uniqueness
-            const docRef = doc(collectionRef, item.ingredientId);
-            return setDocumentNonBlocking(docRef, item, {});
+        ingredients.forEach(item => {
+            const newId = uuidv4();
+            const docRef = doc(collectionRef, newId);
+            batch.set(docRef, { ...item, id: newId, recipeId: recipeId });
         });
-        await Promise.all(promises);
+    }
+}
+
+async function seedSupplierIngredients(batch: import('firebase/firestore').WriteBatch) {
+    for (const supplier of seedSuppliers) {
+        const ingredientsForSupplier = seedIngredients.filter(ing => ing.supplierId === supplier.id);
+        const ingredientsCollectionRef = collection(firestore, `suppliers/${supplier.id}/ingredients`);
+        const snapshot = await getDocs(ingredientsCollectionRef);
+        if (snapshot.empty) {
+            console.log(`Seeding ingredients for supplier '${supplier.id}'...`);
+            for (const ingredient of ingredientsForSupplier) {
+                const { supplierId, ...ingredientData } = ingredient;
+                const docRef = doc(ingredientsCollectionRef, ingredient.id);
+                batch.set(docRef, ingredientData);
+            }
+        }
     }
 }
 
 
 export async function seedDatabase() {
     try {
-        await seedCollection('suppliers', seedSuppliers);
+        const batch = writeBatch(firestore);
 
-        // Seed ingredients under their respective suppliers
-        const { setDocumentNonBlocking } = await import('@/firebase/non-blocking-updates');
-        for (const supplier of seedSuppliers) {
-            const ingredientsForSupplier = seedIngredients.filter(ing => ing.supplierId === supplier.id);
-            const ingredientsCollectionRef = collection(firestore, `/suppliers/${supplier.id}/ingredients`);
-            const snapshot = await getDocs(ingredientsCollectionRef);
-            if (snapshot.empty) {
-                console.log(`Seeding ingredients for supplier '${supplier.id}'...`);
-                for (const ingredient of ingredientsForSupplier) {
-                    const { supplierId, ...ingredientData } = ingredient;
-                    const docRef = doc(ingredientsCollectionRef, ingredient.id);
-                    setDocumentNonBlocking(docRef, ingredientData, {});
-                }
-            }
-        }
-
-        await seedCollection('recipes', seedRecipes);
-
+        await seedCollection('suppliers', seedSuppliers, batch);
+        await seedSupplierIngredients(batch);
+        await seedCollection('recipes', seedRecipes, batch);
+        
         for (const recipe of seedRecipes) {
             const ingredients = seedRecipeIngredients[recipe.id as keyof typeof seedRecipeIngredients];
             if (ingredients) {
-                await seedSubCollection(recipe.id, ingredients);
+                await seedSubCollection(recipe.id, ingredients, batch);
             }
         }
-
+        
+        await batch.commit();
         console.log("Database seeding check complete.");
+
     } catch (error) {
-        console.error("Error seeding database: ", error);
+        if ((error as any).code !== 'failed-precondition') { // It's okay if it's already seeded
+            console.error("Error seeding database: ", error);
+        }
     }
 }

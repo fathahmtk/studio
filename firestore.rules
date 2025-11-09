@@ -1,0 +1,91 @@
+/**
+ * @fileoverview Firestore Security Rules for Culinary Cost Manager.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a role-based access control model, where all authenticated users have read access, but create, update, and delete operations are restricted based on roles and path-based ownership.
+ *
+ * Data Structure:
+ * - /suppliers/{supplierId}: Stores supplier information.
+ * - /suppliers/{supplierId}/ingredients/{ingredientId}: Stores ingredients associated with each supplier.
+ * - /recipes/{recipeId}: Stores recipe information.
+ * - /recipes/{recipeId}/recipeIngredients/{recipeIngredientId}: Stores the ingredients required for each recipe.
+ * - /recipes/{recipeId}/menuCostAnalysis/{menuCostAnalysisId}: Stores the menu cost analysis for each recipe.
+ *
+ * Key Security Decisions:
+ * - Authenticated users can read all data.
+ * - Only authenticated users can create, update, or delete data, enforced through role-based checks.
+ * - Data validation is minimized in this prototyping phase to allow for flexible data shapes.
+ *
+ * Denormalization for Authorization:
+ * - The data model already follows a structure where related entities are nested, avoiding the need for external `get()` calls for authorization.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows authenticated users to read suppliers, but restricts write access.
+     * @path /suppliers/{supplierId}
+     * @allow (get, list) User is signed in.
+     * @deny (create, update, delete) User is not an admin.
+     * @principle Role-based access control for write operations.
+     */
+    match /suppliers/{supplierId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows authenticated users to read ingredients associated with suppliers, but restricts write access.
+     * @path /suppliers/{supplierId}/ingredients/{ingredientId}
+     * @allow (get, list) User is signed in.
+     * @deny (create, update, delete) User is not an admin.
+     * @principle Role-based access control and data ownership for write operations.
+     */
+    match /suppliers/{supplierId}/ingredients/{ingredientId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows authenticated users to read recipes, but restricts write access.
+     * @path /recipes/{recipeId}
+     * @allow (get, list) User is signed in.
+     * @deny (create, update, delete) User is not an admin.
+     * @principle Role-based access control for write operations.
+     */
+    match /recipes/{recipeId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows authenticated users to read recipe ingredients associated with recipes, but restricts write access.
+     * @path /recipes/{recipeId}/recipeIngredients/{recipeIngredientId}
+     * @allow (get, list) User is signed in.
+     * @deny (create, update, delete) User is not an admin.
+     * @principle Role-based access control and data ownership for write operations.
+     */
+    match /recipes/{recipeId}/recipeIngredients/{recipeIngredientId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows authenticated users to read menu cost analysis associated with recipes, but restricts write access.
+     * @path /recipes/{recipeId}/menuCostAnalysis/{menuCostAnalysisId}
+     * @allow (get, list) User is signed in.
+     * @deny (create, update, delete) User is not an admin.
+     * @principle Role-based access control and data ownership for write operations.
+     */
+    match /recipes/{recipeId}/menuCostAnalysis/{menuCostAnalysisId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    // Define helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+  }
+}

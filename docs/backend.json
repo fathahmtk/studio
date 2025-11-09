@@ -1,0 +1,275 @@
+{
+  "entities": {
+    "Ingredient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Ingredient",
+      "type": "object",
+      "description": "Represents an ingredient used in recipes.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Ingredient entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the ingredient."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the ingredient."
+        },
+        "purchaseCost": {
+          "type": "number",
+          "description": "Cost of purchasing the ingredient."
+        },
+        "unitMeasurement": {
+          "type": "string",
+          "description": "Unit of measurement for the ingredient (e.g., kg, lb, oz)."
+        },
+        "supplierId": {
+          "type": "string",
+          "description": "Reference to Supplier. (Relationship: Supplier 1:N Ingredient)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "purchaseCost",
+        "unitMeasurement",
+        "supplierId"
+      ]
+    },
+    "Supplier": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Supplier",
+      "type": "object",
+      "description": "Represents a supplier of ingredients.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Supplier entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the supplier."
+        },
+        "contactInformation": {
+          "type": "string",
+          "description": "Contact details for the supplier."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "contactInformation"
+      ]
+    },
+    "Recipe": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Recipe",
+      "type": "object",
+      "description": "Represents a menu recipe.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Recipe entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the recipe."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the recipe and preparation instructions."
+        },
+        "portionSize": {
+          "type": "string",
+          "description": "The portion size of the recipe."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "RecipeIngredient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RecipeIngredient",
+      "type": "object",
+      "description": "Represents the ingredients required for a recipe and their quantities. (Relationship: Recipe 1:N RecipeIngredient, Ingredient 1:N RecipeIngredient)",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the RecipeIngredient entity."
+        },
+        "recipeId": {
+          "type": "string",
+          "description": "Reference to Recipe. (Relationship: Recipe 1:N RecipeIngredient)"
+        },
+        "ingredientId": {
+          "type": "string",
+          "description": "Reference to Ingredient. (Relationship: Ingredient 1:N RecipeIngredient)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the ingredient required for the recipe."
+        }
+      },
+      "required": [
+        "id",
+        "recipeId",
+        "ingredientId",
+        "quantity"
+      ]
+    },
+    "MenuCostAnalysis": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MenuCostAnalysis",
+      "type": "object",
+      "description": "Represents the cost analysis of a menu item.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MenuCostAnalysis entity."
+        },
+        "recipeId": {
+          "type": "string",
+          "description": "Reference to Recipe. (Relationship: Recipe 1:1 MenuCostAnalysis)"
+        },
+        "ingredientCost": {
+          "type": "number",
+          "description": "Total cost of ingredients for the menu item."
+        },
+        "laborCost": {
+          "type": "number",
+          "description": "Labor cost associated with preparing the menu item."
+        },
+        "overheadCost": {
+          "type": "number",
+          "description": "Overhead costs associated with the menu item."
+        },
+        "finalMenuPrice": {
+          "type": "number",
+          "description": "Final menu price calculated after including all costs."
+        },
+        "profitMargin": {
+          "type": "number",
+          "description": "The profit margin of the menu item."
+        }
+      },
+      "required": [
+        "id",
+        "recipeId",
+        "ingredientCost",
+        "laborCost",
+        "overheadCost",
+        "finalMenuPrice",
+        "profitMargin"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/suppliers/{supplierId}",
+        "definition": {
+          "entityName": "Supplier",
+          "schema": {
+            "$ref": "#/backend/entities/Supplier"
+          },
+          "description": "Stores supplier information. Includes supplier ID in the document ID.",
+          "params": [
+            {
+              "name": "supplierId",
+              "description": "The unique identifier of the supplier."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/suppliers/{supplierId}/ingredients/{ingredientId}",
+        "definition": {
+          "entityName": "Ingredient",
+          "schema": {
+            "$ref": "#/backend/entities/Ingredient"
+          },
+          "description": "Stores ingredients associated with each supplier.  'supplierId' is used to nest the ingredients and is included in the document ID.",
+          "params": [
+            {
+              "name": "supplierId",
+              "description": "The unique identifier of the supplier."
+            },
+            {
+              "name": "ingredientId",
+              "description": "The unique identifier of the ingredient."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/recipes/{recipeId}",
+        "definition": {
+          "entityName": "Recipe",
+          "schema": {
+            "$ref": "#/backend/entities/Recipe"
+          },
+          "description": "Stores recipe information. 'recipeId' is included in the document ID.",
+          "params": [
+            {
+              "name": "recipeId",
+              "description": "The unique identifier of the recipe."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/recipes/{recipeId}/recipeIngredients/{recipeIngredientId}",
+        "definition": {
+          "entityName": "RecipeIngredient",
+          "schema": {
+            "$ref": "#/backend/entities/RecipeIngredient"
+          },
+          "description": "Stores the ingredients required for each recipe. 'recipeId' is used to nest the ingredients. The document id includes 'recipeIngredientId'.",
+          "params": [
+            {
+              "name": "recipeId",
+              "description": "The unique identifier of the recipe."
+            },
+            {
+              "name": "recipeIngredientId",
+              "description": "The unique identifier of the recipe ingredient."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/recipes/{recipeId}/menuCostAnalysis/{menuCostAnalysisId}",
+        "definition": {
+          "entityName": "MenuCostAnalysis",
+          "schema": {
+            "$ref": "#/backend/entities/MenuCostAnalysis"
+          },
+          "description": "Stores the menu cost analysis for each recipe. 'recipeId' is used to nest the costs. The document id includes 'menuCostAnalysisId'.",
+          "params": [
+            {
+              "name": "recipeId",
+              "description": "The unique identifier of the recipe."
+            },
+            {
+              "name": "menuCostAnalysisId",
+              "description": "The unique identifier of the menu cost analysis."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the 'Culinary Cost Manager' application, focusing on ingredient and recipe management, cost analysis, and supplier integration. The structure prioritizes authorization independence by avoiding hierarchical `get()` calls in security rules, enhances debuggability through clear path-based ownership, ensures that rules are not filters, and supports data integrity.\n\nThe core entities are: `Ingredient`, `Supplier`, `Recipe`, `RecipeIngredient`, and `MenuCostAnalysis`. The structure leverages path-based ownership for private user data, and denormalizes authorization data where necessary to avoid complex security rules.\n\nAuthorization Independence is achieved primarily through the design of the paths and denormalizing. For instance, access to `Ingredients` is controlled via the Supplier relationship. Since `Ingredients` are not user specific, the structure does not need to manage per user permissions. The structure has no `get()` calls which facilitates atomic operations and easy debugging.\n\nTo support required QAPs (Rules are not Filters), segregation is used. Since Ingredients are tied to Suppliers, the Ingredient list operation is secure since it lists everything related to a Supplier. Also, since a user does not own any data, there is no need to filter by user.\n\nFinally, the structure clearly models the relationships between these entities.\n"
+  }
+}

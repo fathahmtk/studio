@@ -78,7 +78,7 @@ export function IngredientsTable({ ingredients, suppliers }: { ingredients: Ingr
                                 Add Ingredient
                             </Button>
                         </SheetTrigger>
-                        <SheetContent className="sm:max-w-lg">
+                        <SheetContent className="sm:max-w-lg overflow-y-auto">
                             <SheetHeader>
                                 <SheetTitle>{selectedIngredient ? 'Edit' : 'Add'} Ingredient</SheetTitle>
                             </SheetHeader>
@@ -92,7 +92,8 @@ export function IngredientsTable({ ingredients, suppliers }: { ingredients: Ingr
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="overflow-x-auto">
+                {/* Desktop Table */}
+                <div className="hidden md:block">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -122,6 +123,25 @@ export function IngredientsTable({ ingredients, suppliers }: { ingredients: Ingr
                         </TableBody>
                     </Table>
                 </div>
+                {/* Mobile Cards */}
+                <div className="grid grid-cols-1 gap-4 md:hidden">
+                    {ingredients.map(ingredient => (
+                         <Card key={ingredient.id} className="w-full">
+                            <CardContent className="p-4 flex justify-between items-start">
+                                <div className="space-y-1">
+                                    <p className="font-semibold">{ingredient.name}</p>
+                                    <p className="text-sm text-muted-foreground">{supplierMap.get(ingredient.supplierId) || 'N/A'}</p>
+                                    <p className="text-sm">QAR {ingredient.purchaseCost.toFixed(2)} / {ingredient.unitMeasurement}</p>
+                                    <Badge variant={ingredient.stock && ingredient.stock < 10 ? "destructive" : "secondary"}>
+                                        Stock: {ingredient.stock || 0}
+                                    </Badge>
+                                </div>
+                                <IngredientActions ingredient={ingredient} onEdit={() => handleEdit(ingredient)} />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+
                  {ingredients.length === 0 && (
                     <div className="text-center p-8 text-muted-foreground">
                         No ingredients found. Add one to get started.

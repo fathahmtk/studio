@@ -65,7 +65,8 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="overflow-x-auto">
+                {/* Desktop Table */}
+                <div className="hidden md:block">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -86,6 +87,20 @@ export function SuppliersTable({ suppliers }: { suppliers: Supplier[] }) {
                             ))}
                         </TableBody>
                     </Table>
+                </div>
+                 {/* Mobile Cards */}
+                 <div className="grid grid-cols-1 gap-4 md:hidden">
+                    {suppliers.map(supplier => (
+                         <Card key={supplier.id} className="w-full">
+                            <CardContent className="p-4 flex justify-between items-start">
+                                <div className="space-y-1">
+                                    <p className="font-semibold">{supplier.name}</p>
+                                    <p className="text-sm text-muted-foreground">{supplier.contactInformation}</p>
+                                </div>
+                                <SupplierActions supplier={supplier} onEdit={() => handleEdit(supplier)} />
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
                  {suppliers.length === 0 && (
                     <div className="text-center p-8 text-muted-foreground">

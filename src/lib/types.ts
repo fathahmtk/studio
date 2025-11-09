@@ -19,10 +19,6 @@ export type RecipeIngredient = {
   recipeId: string;
   ingredientId: string;
   quantity: number;
-  // We can fetch ingredient details separately if needed
-  name?: string;
-  purchaseCost?: number;
-  unitMeasurement?: 'kg' | 'g' | 'l' | 'ml' | 'piece';
 };
 
 export type Recipe = {
@@ -32,9 +28,6 @@ export type Recipe = {
   portionSize?: string;
   imageUrl?: string;
   imageHint?: string;
-  // Representing the subcollection
-  recipeIngredients?: RecipeIngredient[];
-  // These could be part of a subcollection or denormalized
   laborCost: number;
   overheadCost: number;
 };

@@ -1,5 +1,5 @@
 'use client';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useDoc, useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc, collection, collectionGroup } from 'firebase/firestore';
 import type { Recipe, RecipeIngredient, Ingredient } from '@/lib/types';
@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function RecipeDetailsPage() {
   const { recipeId } = useParams();
+  const router = useRouter();
   const firestore = useFirestore();
   const { user, isUserLoading: isUserLoadingAuth } = useUser();
 
@@ -46,6 +47,10 @@ export default function RecipeDetailsPage() {
         const details = getIngredientDetails(item.ingredientId);
         return acc + (details ? details.purchaseCost * item.quantity : 0);
       }, 0);
+  }
+  
+  const handleEdit = () => {
+    router.push(`/recipes/edit/${recipeId}`);
   }
 
   const isLoading = isUserLoadingAuth || isLoadingRecipe || isLoadingRecipeIngredients || isLoadingAllIngredients;
@@ -97,7 +102,7 @@ export default function RecipeDetailsPage() {
     <div className="space-y-6">
        <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold tracking-tight">{recipe.name}</h1>
-             <Button variant="outline" disabled>
+             <Button variant="outline" onClick={handleEdit}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit Recipe
             </Button>
@@ -140,7 +145,7 @@ export default function RecipeDetailsPage() {
                   {recipeIngredients?.map(item => {
                     const details = getIngredientDetails(item.ingredientId);
                     return (
-                      <TableRow key={item.ingredientId}>
+                      <TableRow key={item.id}>
                         <TableCell className="font-medium">{details?.name || 'Loading...'}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
                         <TableCell>{details?.unitMeasurement || '...'}</TableCell>

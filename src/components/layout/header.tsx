@@ -20,13 +20,18 @@ const pageTitles: { [key: string]: string } = {
   '/': 'Dashboard',
   '/ingredients': 'Ingredients',
   '/recipes': 'Recipes',
+  '/suppliers': 'Suppliers',
   '/recipes/new': 'New Recipe',
+  '/recipes/edit': 'Edit Recipe',
   '/analysis': 'Cost Analysis',
 };
 
 function getTitle(pathname: string): string {
   if (pageTitles[pathname]) {
     return pageTitles[pathname];
+  }
+  if (pathname.startsWith('/recipes/edit')) {
+    return 'Edit Recipe';
   }
   if (pathname.startsWith('/recipes/')) {
     return 'Recipe Details';

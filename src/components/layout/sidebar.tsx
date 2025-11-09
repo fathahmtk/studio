@@ -2,15 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardList, DollarSign, LayoutDashboard, ChefHat, Utensils } from 'lucide-react';
+import { ClipboardList, DollarSign, LayoutDashboard, ChefHat, Utensils, Truck } from 'lucide-react';
 import {
   Sidebar,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarContent,
   SidebarFooter,
+  SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 
@@ -18,6 +18,7 @@ const links = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/ingredients', label: 'Ingredients', icon: ChefHat },
   { href: '/recipes', label: 'Recipes', icon: Utensils },
+  { href: '/suppliers', label: 'Suppliers', icon: Truck },
   { href: '/analysis', label: 'Cost Analysis', icon: DollarSign },
 ];
 

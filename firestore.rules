@@ -13,7 +13,7 @@
  *
  * Key Security Decisions:
  * - Authenticated users can read all data.
- * - Only authenticated users can create, update, or delete data, enforced through role-based checks.
+ * - Only authenticated users can create, update, or delete data.
  * - Data validation is minimized in this prototyping phase to allow for flexible data shapes.
  *
  * Denormalization for Authorization:
@@ -31,8 +31,7 @@ service cloud.firestore {
      * @principle Role-based access control for write operations.
      */
     match /suppliers/{supplierId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow read, write: if isSignedIn();
     }
 
     /**
@@ -43,8 +42,7 @@ service cloud.firestore {
      * @principle Role-based access control and data ownership for write operations.
      */
     match /suppliers/{supplierId}/ingredients/{ingredientId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow read, write: if isSignedIn();
     }
 
     /**
@@ -55,8 +53,7 @@ service cloud.firestore {
      * @principle Role-based access control for write operations.
      */
     match /recipes/{recipeId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow read, write: if isSignedIn();
     }
 
     /**
@@ -67,8 +64,7 @@ service cloud.firestore {
      * @principle Role-based access control and data ownership for write operations.
      */
     match /recipes/{recipeId}/recipeIngredients/{recipeIngredientId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow read, write: if isSignedIn();
     }
 
     /**
@@ -79,8 +75,7 @@ service cloud.firestore {
      * @principle Role-based access control and data ownership for write operations.
      */
     match /recipes/{recipeId}/menuCostAnalysis/{menuCostAnalysisId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow read, write: if isSignedIn();
     }
 
     // Define helper functions

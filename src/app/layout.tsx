@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { AppLayout } from '@/components/layout/app-layout';
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'Culinary Cost Manager',
@@ -25,7 +26,9 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-        <AppLayout>{children}</AppLayout>
+        <FirebaseClientProvider>
+          <AppLayout>{children}</AppLayout>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>

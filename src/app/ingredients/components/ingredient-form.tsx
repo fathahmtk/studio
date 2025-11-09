@@ -6,32 +6,65 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Ingredient, Supplier } from '@/lib/types';
+import { useFirestore } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
+import { setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
-  supplier: z.string().min(2, "Supplier must be at least 2 characters."),
-  cost: z.coerce.number().positive("Cost must be a positive number."),
-  unit: z.enum(['kg', 'g', 'l', 'ml', 'piece']),
-  quantity: z.coerce.number().nonnegative("Quantity cannot be negative."),
+  description: z.string().optional(),
+  supplierId: z.string().min(1, "Please select a supplier."),
+  purchaseCost: z.coerce.number().positive("Cost must be a positive number."),
+  unitMeasurement: z.enum(['kg', 'g', 'l', 'ml', 'piece']),
+  stock: z.coerce.number().nonnegative("Stock cannot be negative.").optional(),
 });
 
-export function IngredientForm() {
-  const form = useForm<z.infer<typeof formSchema>>({
+type IngredientFormValues = z.infer<typeof formSchema>;
+
+interface IngredientFormProps {
+    ingredient?: Ingredient;
+    suppliers: Supplier[];
+    onSuccess: () => void;
+}
+
+export function IngredientForm({ ingredient, suppliers, onSuccess }: IngredientFormProps) {
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const form = useForm<IngredientFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: ingredient ? {
+        ...ingredient,
+        stock: ingredient.stock ?? 0,
+    } : {
       name: "",
-      supplier: "",
-      cost: undefined,
-      unit: "kg",
-      quantity: undefined,
+      description: "",
+      supplierId: "",
+      purchaseCost: undefined,
+      unitMeasurement: "kg",
+      stock: 0,
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    alert("Ingredient submitted! Check console for data. In a real app, this would close the dialog.");
-    // Here you would typically handle form submission, e.g., call an API
-    // and then close the dialog upon success.
+  async function onSubmit(values: IngredientFormValues) {
+    try {
+        if (ingredient) {
+            const docRef = doc(firestore, `suppliers/${values.supplierId}/ingredients`, ingredient.id);
+            setDocumentNonBlocking(docRef, values, { merge: true });
+            toast({ title: "Success", description: "Ingredient updated successfully." });
+        } else {
+            const collectionRef = collection(firestore, `suppliers/${values.supplierId}/ingredients`);
+            await addDocumentNonBlocking(collectionRef, values);
+            toast({ title: "Success", description: "Ingredient added successfully." });
+        }
+        onSuccess();
+    } catch (error) {
+        console.error("Error saving ingredient: ", error);
+        toast({ variant: "destructive", title: "Error", description: "Failed to save ingredient." });
+    }
   }
 
   return (
@@ -51,14 +84,36 @@ export function IngredientForm() {
           )}
         />
         <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                    <Textarea placeholder="e.g. All-purpose, unbleached" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
+         <FormField
           control={form.control}
-          name="supplier"
+          name="supplierId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Supplier</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Qatar Flour Mills" {...field} />
-              </FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a supplier" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {suppliers.map(supplier => (
+                    <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -66,7 +121,7 @@ export function IngredientForm() {
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="cost"
+            name="purchaseCost"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cost (QAR)</FormLabel>
@@ -79,7 +134,7 @@ export function IngredientForm() {
           />
           <FormField
             control={form.control}
-            name="unit"
+            name="unitMeasurement"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Unit</FormLabel>
@@ -104,7 +159,7 @@ export function IngredientForm() {
         </div>
         <FormField
           control={form.control}
-          name="quantity"
+          name="stock"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Stock Quantity</FormLabel>

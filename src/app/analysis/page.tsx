@@ -1,3 +1,4 @@
+'use client';
 import {
   Table,
   TableBody,
@@ -7,16 +8,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { recipes, ingredients } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, collectionGroup } from "firebase/firestore";
+import type { Ingredient, Recipe, RecipeIngredient } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const calculateRecipeCost = (recipe: (typeof recipes)[0]) => {
-  return recipe.ingredients.reduce((total, item) => {
-    const ingredient = ingredients.find((i) => i.id === item.ingredientId);
+const calculateRecipeCost = (recipe: Recipe, recipeIngredients: RecipeIngredient[] | null, allIngredients: Ingredient[] | null) => {
+  if (!recipeIngredients || !allIngredients) return 0;
+
+  const ingredientsForRecipe = recipeIngredients.filter(ri => ri.id.startsWith(recipe.id));
+  
+  const ingredientCost = ingredientsForRecipe.reduce((total, item) => {
+    const ingredient = allIngredients.find((i) => i.id === item.ingredientId);
     if (!ingredient) return total;
-    return total + ingredient.cost * item.quantity;
+    return total + ingredient.purchaseCost * item.quantity;
   }, 0);
+
+  return ingredientCost;
 };
+
 
 const portionSizes = [
   { name: 'Small', multiplier: 0.75 },
@@ -25,6 +36,46 @@ const portionSizes = [
 ];
 
 export default function AnalysisPage() {
+  const firestore = useFirestore();
+
+  const recipesQuery = useMemoFirebase(() => collection(firestore, "recipes"), [firestore]);
+  const { data: recipes, isLoading: isLoadingRecipes } = useCollection<Recipe>(recipesQuery);
+
+  const ingredientsQuery = useMemoFirebase(() => collectionGroup(firestore, "ingredients"), [firestore]);
+  const { data: ingredients, isLoading: isLoadingIngredients } = useCollection<Ingredient>(ingredientsQuery);
+
+  const recipeIngredientsQuery = useMemoFirebase(() => collectionGroup(firestore, 'recipeIngredients'), [firestore]);
+  const { data: recipeIngredients, isLoading: isLoadingRecipeIngredients } = useCollection<RecipeIngredient>(recipeIngredientsQuery);
+
+  const isLoading = isLoadingRecipes || isLoadingIngredients || isLoadingRecipeIngredients;
+  
+  if (isLoading) {
+    return (
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Menu Profitability</CardTitle>
+                    <CardDescription>
+                        Analyze profitability and cost breakdown for your menu items.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-64 w-full" />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Cost by Portion Size</CardTitle>
+                    <CardDescription>Review the total cost for different serving sizes.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-48 w-full" />
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <Card>
@@ -47,13 +98,13 @@ export default function AnalysisPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recipes.map((recipe) => {
-                const ingredientCost = calculateRecipeCost(recipe);
-                const otherCosts = recipe.laborCost + recipe.overhead;
+              {recipes?.map((recipe) => {
+                const ingredientCost = calculateRecipeCost(recipe, recipeIngredients, ingredients);
+                const otherCosts = recipe.laborCost + recipe.overheadCost;
                 const totalCost = ingredientCost + otherCosts;
                 const suggestedPrice = totalCost * 3; // Standard 3x markup
                 const profit = suggestedPrice - totalCost;
-                const profitMargin = (profit / suggestedPrice) * 100;
+                const profitMargin = suggestedPrice > 0 ? (profit / suggestedPrice) * 100 : 0;
 
                 return (
                   <TableRow key={recipe.id}>
@@ -90,8 +141,9 @@ export default function AnalysisPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {recipes.map(recipe => {
-                        const baseCost = calculateRecipeCost(recipe) + recipe.laborCost + recipe.overhead;
+                    {recipes?.map(recipe => {
+                        const ingredientCost = calculateRecipeCost(recipe, recipeIngredients, ingredients);
+                        const baseCost = ingredientCost + recipe.laborCost + recipe.overheadCost;
                         return (
                             <TableRow key={recipe.id}>
                                 <TableCell className="font-medium">{recipe.name}</TableCell>

@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "user-avatar",
+      "description": "User avatar for header",
+      "imageUrl": "https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjI1OTQ3NDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "recipe-biryani",
+      "description": "Image for Classic Chicken Biryani",
+      "imageUrl": "https://images.unsplash.com/photo-1589302168068-964664d93dc0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjaGlja2VuJTIwYmlyeWFuaXxlbnwwfHx8fDE3NjI2Nzc2NDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chicken biryani"
+    },
+    {
+      "id": "recipe-cake",
+      "description": "Image for Vanilla Sponge Cake",
+      "imageUrl": "https://images.unsplash.com/photo-1624975964661-4999f124a4c3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx2YW5pbGxhJTIwY2FrZXxlbnwwfHx8fDE3NjI2OTg2ODV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vanilla cake"
+    },
+    {
+      "id": "recipe-salad",
+      "description": "Image for Grilled Chicken Salad",
+      "imageUrl": "https://images.unsplash.com/photo-1666599028424-e316d4e34aa6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjaGlja2VuJTIwc2FsYWR8ZW58MHx8fHwxNzYyNzEwMjI2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chicken salad"
+    }
+  ]
 }

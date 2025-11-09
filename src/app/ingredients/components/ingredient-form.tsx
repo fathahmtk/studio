@@ -12,6 +12,7 @@ import { doc, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -52,12 +53,25 @@ export function IngredientForm({ ingredient, suppliers, onSuccess }: IngredientF
   async function onSubmit(values: IngredientFormValues) {
     try {
         if (ingredient) {
-            const docRef = doc(firestore, `suppliers/${values.supplierId}/ingredients`, ingredient.id);
-            setDocumentNonBlocking(docRef, values, { merge: true });
+            // If supplier has changed, we need to move the document.
+            // This means deleting the old one and creating a new one.
+            if (ingredient.supplierId !== values.supplierId) {
+                const oldDocRef = doc(firestore, `suppliers/${ingredient.supplierId}/ingredients`, ingredient.id);
+                const { deleteDocumentNonBlocking } = await import('@/firebase/non-blocking-updates');
+                deleteDocumentNonBlocking(oldDocRef);
+
+                const newDocRef = doc(firestore, `suppliers/${values.supplierId}/ingredients`, ingredient.id);
+                setDocumentNonBlocking(newDocRef, { ...values, id: ingredient.id }, {});
+            } else {
+                 const docRef = doc(firestore, `suppliers/${values.supplierId}/ingredients`, ingredient.id);
+                 setDocumentNonBlocking(docRef, values, { merge: true });
+            }
             toast({ title: "Success", description: "Ingredient updated successfully." });
         } else {
+            const newId = uuidv4();
             const collectionRef = collection(firestore, `suppliers/${values.supplierId}/ingredients`);
-            await addDocumentNonBlocking(collectionRef, values);
+            const docRef = doc(collectionRef, newId);
+            await setDocumentNonBlocking(docRef, { ...values, id: newId }, {});
             toast({ title: "Success", description: "Ingredient added successfully." });
         }
         onSuccess();
@@ -102,7 +116,7 @@ export function IngredientForm({ ingredient, suppliers, onSuccess }: IngredientF
           render={({ field }) => (
             <FormItem>
               <FormLabel>Supplier</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!suppliers || suppliers.length === 0}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a supplier" />

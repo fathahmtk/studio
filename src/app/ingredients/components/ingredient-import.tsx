@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Supplier } from '@/lib/types';
 import * as XLSX from 'xlsx';
 import { useFirestore } from '@/firebase';
-import { collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 import { Upload } from 'lucide-react';
 import {v4 as uuidv4} from 'uuid';
 
@@ -13,7 +13,7 @@ interface IngredientImportProps {
     suppliers: Supplier[];
 }
 
-// Expected columns in the Excel file. Case-insensitive.
+// Expected columns in the Excel file. Case-insensitive and ignores spaces.
 const expectedColumns = {
     'name': 'name',
     'description': 'description',
@@ -110,7 +110,7 @@ export function IngredientImport({ suppliers }: IngredientImportProps) {
 
             const ingredientId = uuidv4();
             const ingredientsCollectionRef = collection(firestore, `suppliers/${supplierId}/ingredients`);
-            const docRef = collection(firestore, ingredientsCollectionRef.path, ingredientId);
+            const docRef = doc(ingredientsCollectionRef, ingredientId);
 
             batch.set(docRef, {
                 id: ingredientId,
@@ -138,19 +138,21 @@ export function IngredientImport({ suppliers }: IngredientImportProps) {
              if (validRecordsCount === 0) return; // Don't proceed if no records are valid
         }
 
-        try {
-            await batch.commit();
-            toast({
-                title: "Import Successful",
-                description: `${validRecordsCount} ingredients were successfully imported.`,
-            });
-        } catch (error) {
-            console.error("Firestore batch commit failed: ", error);
-            toast({
-                variant: "destructive",
-                title: "Upload Error",
-                description: "Failed to save ingredients to the database.",
-            });
+        if (validRecordsCount > 0) {
+            try {
+                await batch.commit();
+                toast({
+                    title: "Import Complete",
+                    description: `${validRecordsCount} ingredients were successfully imported. ${errorMessages.length > 0 ? `${errorMessages.length} records failed.` : '' }`,
+                });
+            } catch (error) {
+                console.error("Firestore batch commit failed: ", error);
+                toast({
+                    variant: "destructive",
+                    title: "Upload Error",
+                    description: "Failed to save ingredients to the database.",
+                });
+            }
         }
     }
 
